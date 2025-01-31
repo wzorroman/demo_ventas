@@ -8,6 +8,9 @@ Es un proyecto basado en Django y SqLite
 
 # Instalando el proyecto
 
+  ## Paso 01 - colocar variables de entorno 
+  Debe crear el archivo *.env* que contiene las variables, usar de base el archivo *.env_demo* como guia
+
   ## Construir la imagen de Docker
   `docker-compose build`
 
@@ -34,6 +37,9 @@ Es un proyecto basado en Django y SqLite
   |---------------|-------------|----------|
   | Administrador | admin       | admin    |
 
+## Visualizar la lista de productos:
+  - Uno vez logueado como administrador ir a la ruta:
+    `http://0.0.0.0:8001/admin/base/producto/`
 
 # ---------------
 # Cargar archivo CSV

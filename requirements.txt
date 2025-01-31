@@ -1,0 +1,15 @@
+Django==4.2
+django-crum==0.7.9
+pycodestyle==2.6.0
+pre-commit==2.4.0
+django-debug-toolbar==2.2
+django-extensions==2.0.5
+sqlparse==0.4.3
+tzdata==2022.7
+factory_boy==3.2.1
+django-dotenv==1.4.2
+pandas==2.0.3
+plotly==6.0.0
+numpy==1.26.4
+boto3==1.36.10
+kaleido==0.2.1
