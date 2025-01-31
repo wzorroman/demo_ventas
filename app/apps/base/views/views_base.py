@@ -1,5 +1,6 @@
 import logging
-from datetime import datetime
+
+from datetime import datetime, date, timedelta
 from django.shortcuts import render
 from django.conf import settings
 
@@ -8,7 +9,7 @@ import plotly.express as px
 import plotly.io as pio
 import boto3
 
-from apps.base.forms.forms import CSVUploadForm
+from apps.base.forms.forms import CSVUploadForm, DateFiltersForm
 from apps.base.models import Producto
 
 logger = logging.getLogger(__name__)
@@ -51,16 +52,13 @@ def load_form(request):
     return render(request, 'index.html', {'form': form})
 
 
-def generate_plot():
-    productos = Producto.objects.all()
-
+def generate_plot(productos: list):
     data = {
         'descripcion': [producto.descripcion for producto in productos],
         'fecha': [producto.fecha for producto in productos],
         'total': [producto.total for producto in productos],
     }
     df = pd.DataFrame(data)
-
     df['fecha'] = pd.to_datetime(df['fecha'])
 
     fig = px.bar(
@@ -82,24 +80,46 @@ def generate_plot():
 
     # Subir la imagen a S3
     # upload_to_s3(img_bytes, 'total_por_producto.png')
-    
+
     return fig
+
 
 def upload_to_s3(img_bytes, filename):
     # Inicializar el cliente S3
-    s3_client = boto3.client('s3', 
-                              aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-                              aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-                              region_name=settings.AWS_REGION)
+    s3_client = boto3.client('s3',
+                             aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+                             aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+                             region_name=settings.AWS_REGION)
 
     # Subir la imagen a S3
     s3_client.put_object(Bucket=settings.AWS_STORAGE_BUCKET_NAME,
                          Key=filename,
                          Body=img_bytes,
                          ContentType='image/png')
-    
-    
+
+
 def plot_view(request):
-    fig = generate_plot()
+    end_date = date.today()
+    start_date = end_date - timedelta(days=30)
+
+    if request.method == 'POST':
+        form = DateFiltersForm(request.POST, request.FILES)
+        if form.is_valid():
+            start_date = form.cleaned_data['start_date']
+            end_date = form.cleaned_data['end_date']
+        else:
+            return render(request, 'products_graphic.html',
+                          {'graph_html': "", 'form': form}
+                          )
+    else:
+        form = DateFiltersForm()
+        form.fields["start_date"].initial = start_date.strftime("%Y-%m-%d")
+        form.fields["end_date"].initial = end_date.strftime("%Y-%m-%d")
+
+    productos_filtrados = Producto.objects.filter(fecha__range=[start_date, end_date])
+    fig = generate_plot(productos_filtrados)
     graph_html = fig.to_html(full_html=False)
-    return render(request, 'products_graphic.html', {'graph_html': graph_html})
+    return render(
+        request, 'products_graphic.html',
+        {'graph_html': graph_html, 'form': form}
+    )

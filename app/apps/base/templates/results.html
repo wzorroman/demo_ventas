@@ -28,16 +28,21 @@
     </style>
 </head>
 <body>
-    <h1>Resultados</h1>
-    {% if table_html %}
-        <h2>Datos del Archivo</h2>
-        <div>
-            {{ table_html|safe }}
-        </div>
-    {% endif %}
-    <hr>
 
-    <a href="{% url 'base:app_base' %}" class="btn btn-primary btn-sm">regresar</a>
-    <a href="{% url 'base:grafico' %}" class="btn btn-warning btn-sm">Ver grafico</a>
+    <div class="container">
+          <h1 class="jumbotron-heading">Datos cargados</h1>
+          {% if table_html %}
+            <div>
+                {{ table_html|safe }}
+            </div>
+          {% endif %}
+        <p>
+            <a href="{% url 'base:app_base' %}" class="btn btn-primary btn-sm my-2">regresar</a>
+            <a href="{% url 'base:grafico' %}" class="btn btn-warning btn-sm my-2">Ver grafico</a>
+          </p>
+        </div>
+
+
+
 </body>
 </html>

@@ -54,6 +54,19 @@
 {% endif %}
     <div class="container mt-5">
         <h1 class="text-center">Subir Archivo CSV</h1>
+        <p class="lead text-muted">El archivo CSV debe tener los campos en el siguiente orden: </p>
+        <ol>
+            <li>descripcion (str)</li>
+            <li>cantidad (int)</li>
+            <li>precio (float)</li>
+            <li>fecha (str: YYYY-MM-DD HH:MM:SS)</li>
+        </ol>
+        <p style="font-size: 0.9em">
+            <b>Ejemplo:</b><br>
+            descripcion,cantidad,precio,fecha<br>
+            Cucharas,6,1.20,2025-01-29 13:31:13
+        </p>
+        <hr>
         <form action="" method="post" enctype="multipart/form-data" class="mt-4">
             {% csrf_token %}
             {{ form.as_p }}
