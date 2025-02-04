@@ -16,46 +16,48 @@ logger = logging.getLogger(__name__)
 
 
 def load_form(request):
-    if request.method == 'POST':
-        form = CSVUploadForm(request.POST, request.FILES)
-        if form.is_valid():
-            uploaded_csv = form.cleaned_data['csv_file']
-            uploaded_csv.file.seek(0)
-            df = pd.read_csv(uploaded_csv)
+    date_format = "%Y-%m-%d %H:%M:%S"
+    required_columns_in_csv = ['descripcion', 'precio', 'cantidad']
 
-            required_columns = ['descripcion', 'precio', 'cantidad']
-            if not all(col in df.columns for col in required_columns):
-                return render(request, 'index.html', {
-                    'form': form,
-                    'error': "El archivo CSV debe contener las columnas: 'descripcion', 'precio', 'cantidad'."
-                })
-
-            df["total"] = df["cantidad"] * df["precio"]
-            date_format = "%Y-%m-%d %H:%M:%S"
-
-            for _, row in df.iterrows():
-                product = Producto(
-                    descripcion=row['descripcion'],
-                    precio=row['precio'],
-                    cantidad=row['cantidad'],
-                    total=row['total'],
-                    fecha=datetime.strptime(row['fecha'], date_format)
-                )
-                product.save()
-
-            data_table_html = df.to_html(index=False, justify="center", classes="table table-bordered")
-
-            return render(request, 'results.html', {'table_html': data_table_html})
-    else:
+    if not request.method == 'POST':
         form = CSVUploadForm()
+        return render(request, 'index.html', {'form': form})
 
-    return render(request, 'index.html', {'form': form})
+    form = CSVUploadForm(request.POST, request.FILES)
+    if not form.is_valid():
+        return render(request, 'index.html', {'form': form})
+
+    uploaded_csv = form.cleaned_data['csv_file']
+    uploaded_csv.file.seek(0)
+    df = pd.read_csv(uploaded_csv)
+
+    if not all(col in df.columns for col in required_columns_in_csv):
+        return render(request, 'index.html', {
+            'form': form,
+            'error': "El archivo CSV debe contener las columnas: 'descripcion', 'precio', 'cantidad'."
+        })
+
+    # Form is valid
+    df["total"] = df["cantidad"] * df["precio"]
+    for _, row in df.iterrows():
+        product = Producto(
+            descripcion=row['descripcion'],
+            precio=row['precio'],
+            cantidad=row['cantidad'],
+            total=row['total'],
+            fecha=datetime.strptime(row['fecha'], date_format)
+        )
+        product.save()
+
+    data_table_to_html = df.to_html(index=False, justify="center", classes="table table-bordered")
+
+    return render(request, 'results.html', {'table_html': data_table_to_html})
 
 
 def generate_plot(productos: list):
     data = {
         'descripcion': [producto.descripcion for producto in productos],
-        'fecha': [producto.fecha for producto in productos],
+        'fecha': [producto.fecha.strftime('%Y/%m/%d') for producto in productos],
         'total': [producto.total for producto in productos],
     }
     df = pd.DataFrame(data)
